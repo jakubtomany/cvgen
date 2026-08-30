@@ -349,7 +349,7 @@
 
   function currentBase() {
     var manual = (manualBase || '').trim();
-    return manual ? manual.replace(/[\/\\]/g, '-') : autoBase();
+    return manual ? manual.replace(/[/\\]/g, '-') : autoBase();
   }
 
   function updateButtons() {
