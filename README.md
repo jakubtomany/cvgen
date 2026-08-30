@@ -1,100 +1,111 @@
-# Generátor životopisu (Markdown → PDF)
+# cvgen — Markdown → PDF CV generator
 
-Statická webová aplikace: do okna přetáhnete soubor `.md`, vpravo se objeví PDF ve formátu
-původního životopisu a stáhnete ho tlačítkem. Sazba běží celá v prohlížeči (pdfmake),
-nic se nikam neodesílá a nasazení je čistě statické.
+A static web app: drop an `.md` file into the window, the right pane shows a PDF
+typeset in a classic CV layout, and a button downloads it. Typesetting runs
+entirely in the browser (pdfmake), nothing is uploaded anywhere, and deployment
+is purely static.
 
-## Struktura
+The CV content itself can be written in any language — the input is plain UTF-8
+Markdown. Glyph coverage is determined by the embedded Liberation fonts, which
+cover Latin, Greek and Cyrillic scripts.
+
+## Structure
 
 ```
-site/                  ← tuhle složku nasazujete na Cloudflare Pages
-  index.html           UI (editor + náhled + drag&drop)
-  app.js               načtení písem, živý náhled, export
-  cv-format.js         JÁDRO: Markdown → pdfmake docDefinition (formát životopisu)
+site/                  ← deploy this folder to Cloudflare Pages
+  index.html           UI (editor + preview + drag & drop)
+  app.js               font loading, live preview, export
+  cv-format.js         CORE: Markdown → pdfmake docDefinition (the CV layout)
   vendor/pdfmake.min.js
-  fonts/               Liberation Serif + Sans (OFL, metricky = Times New Roman / Arial)
-  ukazka/zivotopis.md  výchozí obsah
-build-pdf.js           stejná sazba z příkazové řádky (Node)
+  fonts/               Liberation Serif + Sans (OFL, metrically compatible with Times New Roman / Arial)
+  sample/resume.md     default content
+build-pdf.js           the same typesetting from the command line (Node)
 package.json
 ```
 
-Formát PDF je na jednom místě — `site/cv-format.js`. Objekt `DEFAULTS` nahoře drží okraje
-stránky, šířku sloupce se štítky, velikosti písma a sílu svislé linky; funkce
-`buildDocDefinition` sestavuje samotný dokument. Web i CLI používají tenhle jeden soubor,
-takže náhled v prohlížeči a soubor z terminálu jsou vždy identické.
+The PDF layout lives in one place — `site/cv-format.js`. The `DEFAULTS` object
+at the top holds the page margins, the label column width, font sizes and the
+weight of the vertical rule; `buildDocDefinition` assembles the document itself.
+Both the web app and the CLI use this single file, so the browser preview and a
+file generated from the terminal are always identical.
 
-## Spuštění lokálně
+## Running locally
 
-Musí to běžet přes HTTP (kvůli načítání písem `fetch`em), ne přes `file://`:
-
-```bash
-cd site && python3 -m http.server 8080     # nebo: npx serve site
-```
-
-## Nasazení na Cloudflare Pages
-
-Bez build kroku, jde o statické soubory.
+The page must be served over HTTP (fonts are loaded with `fetch`), not from
+`file://`:
 
 ```bash
-npx wrangler pages deploy site --project-name zivotopis
+cd site && python3 -m http.server 8080     # or: npx serve site
 ```
 
-Nebo přes dashboard: Workers & Pages → Create → Pages → Upload assets a nahrát obsah
-složky `site`. Při napojení na Git repo nechte build command prázdný a output directory `site`.
+## Deploying to Cloudflare Pages
 
-## Generování z příkazové řádky
+No build step — these are static files.
+
+```bash
+npx wrangler pages deploy site --project-name cvgen
+```
+
+Or via the dashboard: Workers & Pages → Create → Pages → Upload assets and
+upload the contents of the `site` folder. When connecting a Git repository,
+leave the build command empty and set the output directory to `site`.
+
+## Generating from the command line
 
 ```bash
 npm install
-node build-pdf.js site/ukazka/zivotopis.md out/zivotopis.pdf
+node build-pdf.js site/sample/resume.md out/resume.pdf
 ```
 
-## Syntaxe Markdownu
+## Markdown syntax
 
-| Zápis | Význam |
+| Syntax | Meaning |
 |---|---|
-| `# Text` | název dokumentu (nahoře, na střed, bezpatkově tučně) |
-| `## Text` | nadpis sekce (Osobní informace, Vzdělání, …) |
-| `**Štítek:** hodnota` | řádek tabulky — štítek vpravo, svislá linka, hodnota vlevo |
-| další řádek bez `**` | pokračování hodnoty na novém řádku ve stejné buňce |
-| `- položka` | odrážka uvnitř právě otevřené hodnoty |
-| `---` | oddělovač položek v sekci (další zaměstnání, další škola) |
-| `### Text` | tučný mezinadpis přes celou šířku (volitelné) |
-| volný odstavec | text přes celou šířku (např. sekce Zájmy) |
+| `# Text` | document title (top, centred, bold sans-serif) |
+| `## Text` | section heading (Personal information, Education, …) |
+| `**Label:** value` | table row — label on the left of a thin vertical rule, value on the right |
+| next line without `**` | continuation of the value on a new line in the same cell |
+| `- item` | bullet inside the currently open value |
+| `---` | item separator within a section (next job, next school) |
+| `### Text` | bold full-width subheading (optional) |
+| plain paragraph | full-width text (e.g. an Interests section) |
 
-Uvnitř hodnot funguje `**tučně**` a `*kurzíva*`.
+`**bold**` and `*italics*` work inside values.
 
-Příklad:
+Example:
 
 ```markdown
-## Vzdělání
+## Education
 
-**Období:** 2010 – 2012
-**Dosažená kvalifikace:** Ing. v oboru Informační management
-**Získané dovednosti (hlavní předměty):**
-- Projektové řízení
-- Analýza a návrh informačních systémů
-**Organizace, která vzdělání poskytla:** Fakulta informatiky a managementu
-Vysoká škola polytechnická v Novém Městě
+**Period:** 2010 – 2012
+**Qualification obtained:** MSc in Information Management
+**Skills acquired (main subjects):**
+- Project management
+- Information systems analysis and design
+**Institution:** Faculty of Informatics and Management
+Polytechnic University of Springfield
 
 ---
 
-**Období:** 2002 – 2006
-**Dosažená kvalifikace:** Maturita
+**Period:** 2002 – 2006
+**Qualification obtained:** Secondary school diploma
 ```
 
-## Poznámky
+## Notes
 
-- Skupina řádků do 8 řádků tabulky se nikdy nezalomí přes stránky (`unbreakableMaxRows`
-  v `cv-format.js`); delší tabulky se zalomit smějí, aby nevznikaly poloprázdné stránky.
-- Osamocený nadpis sekce na patě stránky se automaticky přesune na další stránku.
-- Písma jsou součástí repozitáře (~2,3 MB), takže aplikace funguje i bez internetu
-  a diakritika je vždy správně. Liberation jsou licencí OFL volně šiřitelná.
+- A group of up to 8 table rows never breaks across pages (`unbreakableMaxRows`
+  in `cv-format.js`); longer tables are allowed to break so that half-empty
+  pages don't pile up.
+- A section heading orphaned at the bottom of a page is automatically moved to
+  the next page.
+- The fonts ship with the repository (~2.3 MB), so the app works offline and
+  diacritics always render correctly. The Liberation fonts are freely
+  redistributable under the OFL.
 
-## Licence
+## License
 
-- Písma Liberation Serif a Liberation Sans jsou šířena pod licencí
-  [SIL Open Font License 1.1](site/fonts/LICENSE-OFL.txt) — plný text je přiložen
-  v `site/fonts/LICENSE-OFL.txt`.
-- Knihovna [pdfmake](https://github.com/bpampuch/pdfmake) (v `site/vendor/`) je
-  šířena pod licencí MIT.
+- The Liberation Serif and Liberation Sans fonts are distributed under the
+  [SIL Open Font License 1.1](site/fonts/LICENSE-OFL.txt) — the full text is
+  included in `site/fonts/LICENSE-OFL.txt`.
+- The [pdfmake](https://github.com/bpampuch/pdfmake) library (in `site/vendor/`)
+  is distributed under the MIT license.

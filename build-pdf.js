@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Použití: node build-pdf.js vstup.md vystup.pdf */
+/* Usage: node build-pdf.js input.md output.pdf */
 const fs = require('fs');
 const path = require('path');
 const PdfPrinter = require('pdfmake');
@@ -21,8 +21,8 @@ const fonts = {
   }
 };
 
-const input = process.argv[2] || path.join(__dirname, 'site', 'ukazka', 'zivotopis.md');
-const output = process.argv[3] || path.join(__dirname, 'out', 'zivotopis.pdf');
+const input = process.argv[2] || path.join(__dirname, 'site', 'sample', 'resume.md');
+const output = process.argv[3] || path.join(__dirname, 'out', 'resume.pdf');
 
 fs.mkdirSync(path.dirname(output), { recursive: true });
 
@@ -34,4 +34,4 @@ const pdf = printer.createPdfKitDocument(docDefinition);
 const stream = fs.createWriteStream(output);
 pdf.pipe(stream);
 pdf.end();
-stream.on('finish', () => console.log('Hotovo:', output));
+stream.on('finish', () => console.log('Done:', output));

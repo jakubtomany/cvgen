@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Generátor životopisu — Markdown do PDF</title>
+<title>CV Generator — Markdown to PDF</title>
 <style>
   :root {
     --ink: #17201f;
@@ -169,30 +169,30 @@
 <body>
 
 <header>
-  <h1>Životopis</h1>
-  <p>Markdown vlevo, hotové PDF vpravo. Soubor .md můžete přetáhnout kamkoli do okna.</p>
+  <h1>CV Generator</h1>
+  <p>Markdown on the left, finished PDF on the right. Drop an .md file anywhere in the window.</p>
   <span class="spacer"></span>
-  <button id="btn-open">Otevřít .md</button>
-  <button id="btn-sample">Načíst ukázku</button>
-  <button id="btn-save-md">Uložit .md</button>
-  <button id="btn-pdf" class="primary">Stáhnout PDF</button>
+  <button id="btn-open">Open .md</button>
+  <button id="btn-sample">Load sample</button>
+  <button id="btn-save-md">Save .md</button>
+  <button id="btn-pdf" class="primary">Download PDF</button>
   <input id="file" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
 </header>
 
 <main>
   <section class="pane">
-    <div class="pane-head"><span id="filename">zivotopis.md</span><span class="spacer"></span><span id="counter"></span></div>
-    <textarea id="editor" spellcheck="false" aria-label="Zdrojový Markdown"></textarea>
+    <div class="pane-head"><span id="filename">resume.md</span><span class="spacer"></span><span id="counter"></span></div>
+    <textarea id="editor" spellcheck="false" aria-label="Markdown source"></textarea>
   </section>
   <section class="pane">
-    <div class="pane-head">Náhled PDF</div>
-    <iframe id="preview" title="Náhled PDF"></iframe>
+    <div class="pane-head">PDF preview</div>
+    <iframe id="preview" title="PDF preview"></iframe>
   </section>
 </main>
 
-<div class="status" id="status">Načítám písma…</div>
+<div class="status" id="status">Loading fonts…</div>
 
-<div id="drop"><div>Pusťte soubor .md sem</div></div>
+<div id="drop"><div>Drop your .md file here</div></div>
 
 <script src="vendor/pdfmake.min.js"></script>
 <script src="cv-format.js"></script>

@@ -1,9 +1,9 @@
 /*!
  * cv-format.js — Markdown -> pdfmake docDefinition
- * Formát: dvousloupcová tabulka "štítek | hodnota" s tenkou svislou linkou,
- * patkové písmo pro obsah, bezpatkové tučné pro nadpisy (šablona původního životopisu).
+ * Layout: a two-column "label | value" table with a thin vertical rule,
+ * serif face for content, bold sans-serif for headings (classic CV template).
  *
- * Funguje v Node (module.exports) i v prohlížeči (window.CvFormat).
+ * Works both in Node (module.exports) and in the browser (window.CvFormat).
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
@@ -16,8 +16,8 @@
 
   var DEFAULTS = {
     pageSize: 'A4',
-    pageMargins: [85, 56, 55, 50],   // levý okraj drží štítky na ~14 % šířky strany
-    labelWidth: 122,                 // svislá linka pak vychází na ~35 % šířky strany
+    pageMargins: [85, 56, 55, 50],   // left margin keeps labels at ~14% of page width
+    labelWidth: 122,                 // the vertical rule then falls at ~35% of page width
     baseFontSize: 11,
     lineHeight: 1.15,
     sectionFontSize: 13.5,
@@ -26,7 +26,7 @@
     ruleColor: '#000000',
     cellPaddingV: 3.5,
     cellGap: 9,
-    unbreakableMaxRows: 8            // delší tabulka se smí zalomit mezi stránky
+    unbreakableMaxRows: 8            // longer tables are allowed to break across pages
   };
 
   // ---------------------------------------------------------------- parser --
@@ -66,7 +66,7 @@
 
       if (line === '') continue;
 
-      // vodorovná čára = oddělovač bloků (nová "položka" v sekci)
+      // horizontal rule = block separator (a new "item" within the section)
       if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) {
         newBlock();
         continue;
@@ -74,26 +74,26 @@
 
       var m;
 
-      // # Nadpis dokumentu
+      // # Document title
       if ((m = line.match(/^#\s+(.*)$/))) {
         doc.title = m[1].trim();
         continue;
       }
 
-      // ## Sekce
+      // ## Section
       if ((m = line.match(/^##\s+(.*)$/))) {
         newSection(m[1].trim());
         continue;
       }
 
-      // ### Podnadpis uvnitř sekce (zároveň začíná nový blok)
+      // ### Subheading within a section (also starts a new block)
       if ((m = line.match(/^###\s+(.*)$/))) {
         newBlock();
         block.items.push({ type: 'subheading', text: m[1].trim() });
         continue;
       }
 
-      // **Štítek:** hodnota
+      // **Label:** value
       if ((m = line.match(/^\*\*\s*(.+?)\s*:?\s*\*\*\s*:?\s*(.*)$/))) {
         ensureBlock();
         row = { type: 'row', label: m[1].trim(), lines: [], bullets: [] };
@@ -102,7 +102,7 @@
         continue;
       }
 
-      // - odrážka
+      // - bullet
       if ((m = line.match(/^[-*+]\s+(.*)$/))) {
         ensureBlock();
         if (row) {
@@ -118,7 +118,7 @@
         continue;
       }
 
-      // běžný text: pokračování hodnoty, jinak odstavec přes celou šířku
+      // plain text: continuation of the value, otherwise a full-width paragraph
       ensureBlock();
       if (row) {
         row.lines.push(line);
@@ -130,7 +130,7 @@
     return doc;
   }
 
-  // ------------------------------------------------------- inline formátování
+  // -------------------------------------------------------- inline formatting
 
   function inline(text) {
     var parts = [];
@@ -237,7 +237,7 @@
     return {
       pageSize: o.pageSize,
       pageMargins: o.pageMargins,
-      info: { title: doc.title || 'Životopis' },
+      info: { title: doc.title || 'Curriculum Vitae' },
       content: content,
       defaultStyle: {
         font: 'Serif',
@@ -264,7 +264,7 @@
         }
       },
       pageBreakBefore: function (currentNode, followingNodesOnPage) {
-        // osamocený nadpis sekce na patě stránky přesuneme na další stránku
+        // move a section heading orphaned at the bottom of a page onto the next page
         return currentNode.headlineLevel === 'section' && followingNodesOnPage.length === 0;
       }
     };

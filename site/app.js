@@ -1,4 +1,4 @@
-/* app.js — propojení editoru, pdfmake a fontů */
+/* app.js — wiring between the editor, pdfmake and the fonts */
 (function () {
   'use strict';
 
@@ -34,7 +34,7 @@
   var drop = document.getElementById('drop');
   var fileInput = document.getElementById('file');
 
-  var baseName = 'zivotopis';
+  var baseName = 'resume';
   var fontsReady = false;
   var timer = null;
   var lastUrl = null;
@@ -58,7 +58,7 @@
   function loadFonts() {
     return Promise.all(FONT_FILES.map(function (name) {
       return fetch('fonts/' + name).then(function (res) {
-        if (!res.ok) throw new Error('Nepodařilo se načíst písmo ' + name + ' (' + res.status + ').');
+        if (!res.ok) throw new Error('Failed to load font ' + name + ' (' + res.status + ').');
         return res.arrayBuffer();
       }).then(function (buf) {
         return [name, toBase64(buf)];
@@ -75,17 +75,17 @@
   function render() {
     if (!fontsReady) return;
     var md = editor.value;
-    counter.textContent = md.split('\n').length + ' řádků';
+    counter.textContent = md.split('\n').length + ' lines';
     try {
       var docDefinition = CvFormat.markdownToDocDefinition(md);
       pdfMake.createPdf(docDefinition).getBlob(function (blob) {
         if (lastUrl) URL.revokeObjectURL(lastUrl);
         lastUrl = URL.createObjectURL(blob);
         preview.src = lastUrl + '#toolbar=0&view=FitH';
-        setStatus('Náhled aktuální — ' + baseName + '.pdf, ' + Math.round(blob.size / 1024) + ' kB.');
+        setStatus('Preview up to date — ' + baseName + '.pdf, ' + Math.round(blob.size / 1024) + ' kB.');
       });
     } catch (err) {
-      setStatus('Chyba při sazbě: ' + err.message, true);
+      setStatus('Typesetting error: ' + err.message, true);
     }
   }
 
@@ -97,7 +97,7 @@
   function loadText(text, name) {
     editor.value = text;
     if (name) {
-      baseName = name.replace(/\.(md|markdown|txt)$/i, '') || 'zivotopis';
+      baseName = name.replace(/\.(md|markdown|txt)$/i, '') || 'resume';
       filenameEl.textContent = name;
     }
     render();
@@ -106,7 +106,7 @@
   function readFile(file) {
     var reader = new FileReader();
     reader.onload = function () { loadText(String(reader.result), file.name); };
-    reader.onerror = function () { setStatus('Soubor se nepodařilo přečíst.', true); };
+    reader.onerror = function () { setStatus('Could not read the file.', true); };
     reader.readAsText(file, 'utf-8');
   }
 
@@ -121,7 +121,7 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
   }
 
-  // --- události ---------------------------------------------------------
+  // --- events -----------------------------------------------------------
 
   editor.addEventListener('input', scheduleRender);
 
@@ -133,10 +133,10 @@
   });
 
   document.getElementById('btn-sample').addEventListener('click', function () {
-    fetch('ukazka/zivotopis.md')
+    fetch('sample/resume.md')
       .then(function (r) { return r.text(); })
-      .then(function (t) { loadText(t, 'zivotopis.md'); })
-      .catch(function () { setStatus('Ukázku se nepodařilo načíst.', true); });
+      .then(function (t) { loadText(t, 'resume.md'); })
+      .catch(function () { setStatus('Failed to load the sample.', true); });
   });
 
   document.getElementById('btn-save-md').addEventListener('click', function () {
@@ -148,7 +148,7 @@
     try {
       pdfMake.createPdf(CvFormat.markdownToDocDefinition(editor.value)).download(baseName + '.pdf');
     } catch (err) {
-      setStatus('Chyba při sazbě: ' + err.message, true);
+      setStatus('Typesetting error: ' + err.message, true);
     }
   });
 
@@ -178,14 +178,14 @@
 
   loadFonts()
     .then(function () {
-      setStatus('Písma načtena.');
-      return fetch('ukazka/zivotopis.md').then(function (r) { return r.ok ? r.text() : ''; });
+      setStatus('Fonts loaded.');
+      return fetch('sample/resume.md').then(function (r) { return r.ok ? r.text() : ''; });
     })
     .then(function (text) {
-      if (text) loadText(text, 'zivotopis.md');
+      if (text) loadText(text, 'resume.md');
       else render();
     })
     .catch(function (err) {
-      setStatus(err.message + ' Spusťte stránku přes webový server, ne přes file://.', true);
+      setStatus(err.message + ' Serve the page over HTTP, not from file://.', true);
     });
 })();
