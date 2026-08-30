@@ -110,7 +110,13 @@ Polytechnic University of Springfield
   the page restores it; the bundled sample only loads when there is no saved
   draft.
 - Undo and redo work with Cmd/Ctrl+Z and Cmd/Ctrl+Shift+Z (or Ctrl+Y) and
-  always apply to the editor, regardless of what currently has focus.
+  always apply to the editor, regardless of what currently has focus. The
+  history is stored with the draft as compact diffs (capped at 500 steps /
+  200 kB, oldest steps dropped first), so it survives a page reload. Opening
+  a file and discarding are themselves undoable steps.
+- The Discard button resets the editor back to the bundled sample. It asks for
+  confirmation in place (a second click at least half a second later), and the
+  discarded draft can still be brought back with undo.
 - The UI is available in English and Czech — the selector in the header stores
   the choice in a `cvgen_lang` cookie. The typeset PDF contains only text from
   the Markdown input; the only language-specific piece is the PDF metadata

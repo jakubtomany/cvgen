@@ -80,6 +80,10 @@
 
   button[disabled] { opacity: 0.5; cursor: not-allowed; }
 
+  button.danger { border-color: var(--warn); color: var(--warn); }
+
+  button.danger:hover { border-color: var(--warn); color: var(--warn); }
+
   select {
     font: inherit;
     font-size: 13px;
@@ -222,6 +226,7 @@
   <h1 id="heading">CV Generator</h1>
   <p id="tagline">Markdown on the left, finished PDF on the right. Drop an .md file anywhere in the window.</p>
   <span class="spacer"></span>
+  <button id="btn-reset">Discard</button>
   <button id="btn-open">Open .md</button>
   <select id="lang" aria-label="Language">
     <option value="en">EN</option>
