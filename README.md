@@ -40,7 +40,8 @@ The PDF layout lives in one place, `site/cv-format.js`.
 
 Production is the Cloudflare Pages project `cvcko`, Git-connected to this
 repository: pushes to `main` deploy production, pull requests get preview
-deployments. The output directory is `site`. One-off manual deploy:
+deployments. Cloudflare publishes the contents of `site/` as the site root
+(the project's "build output directory" setting). One-off manual deploy:
 `npx wrangler pages deploy site --project-name cvcko`.
 
 ## License
