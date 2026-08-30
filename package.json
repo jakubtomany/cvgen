@@ -1,0 +1,14 @@
+{
+  "name": "zivotopis-generator",
+  "version": "1.0.0",
+  "description": "Markdown -> PDF generátor životopisu (pdfmake, statický web + CLI)",
+  "private": true,
+  "scripts": {
+    "build": "node build-pdf.js",
+    "serve": "npx --yes serve site",
+    "deploy": "npx --yes wrangler pages deploy site --project-name zivotopis"
+  },
+  "dependencies": {
+    "pdfmake": "^0.2.20"
+  }
+}
