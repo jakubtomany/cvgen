@@ -29,18 +29,19 @@ Cyrillic). The draft and its undo history are kept in the browser's
 
 ## Running and development
 
+There are no dependencies and no build step — everything ships in `site/`
+(pdfmake is vendored). Serve it over HTTP, not from `file://`:
+
 ```bash
-cd site && python3 -m http.server 8080                # run locally (HTTP, not file://)
-npm install && node build-pdf.js input.md output.pdf  # generate from the CLI
+cd site && python3 -m http.server 8080
 ```
 
-The PDF layout lives in one place, `site/cv-format.js` — the web app and the
-CLI share it, so the browser preview and CLI output are always identical.
+The PDF layout lives in one place, `site/cv-format.js`.
 
 Production is the Cloudflare Pages project `cvcko`, Git-connected to this
 repository: pushes to `main` deploy production, pull requests get preview
-deployments. No build step; the output directory is `site`. One-off manual
-deploy: `npm run deploy`.
+deployments. The output directory is `site`. One-off manual deploy:
+`npx wrangler pages deploy site --project-name cvcko`.
 
 ## License
 
