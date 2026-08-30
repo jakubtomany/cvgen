@@ -102,6 +102,34 @@
     padding: 4px 12px;
   }
 
+  .name-edit {
+    display: inline-flex;
+    align-items: baseline;
+    text-transform: none;
+    letter-spacing: normal;
+    font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  #name-input {
+    font: inherit;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px dashed var(--line);
+    padding: 0 0 1px;
+    min-width: 6ch;
+  }
+
+  #name-input:hover,
+  #name-input:focus {
+    outline: none;
+    border-bottom-color: var(--accent);
+  }
+
+  #name-input::placeholder { color: var(--ink-soft); opacity: 1; }
+
+  .name-ext { color: var(--ink-soft); }
+
   main {
     flex: 1;
     display: grid;
@@ -204,7 +232,7 @@
 
 <main>
   <section class="pane">
-    <div class="pane-head"><span id="editor-head">Markdown</span><span class="spacer"></span><button id="btn-save-md">Save resume.md</button></div>
+    <div class="pane-head"><span class="name-edit"><input id="name-input" spellcheck="false" autocomplete="off" aria-label="File name"><span class="name-ext">.md</span></span><span class="spacer"></span><button id="btn-save-md">Save resume.md</button></div>
     <textarea id="editor" spellcheck="false" aria-label="Markdown source"></textarea>
   </section>
   <section class="pane">

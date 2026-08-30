@@ -37,7 +37,7 @@
       saveMd: 'Save {name}',
       downloadPdf: 'Download {name}',
       editorAria: 'Markdown source',
-      editorHead: 'Markdown',
+      nameAria: 'File name',
       previewHead: 'PDF preview',
       loadingFonts: 'Loading fonts…',
       fontsLoaded: 'Fonts loaded.',
@@ -58,7 +58,7 @@
       saveMd: 'Uložit {name}',
       downloadPdf: 'Stáhnout {name}',
       editorAria: 'Zdrojový Markdown',
-      editorHead: 'Markdown',
+      nameAria: 'Název souboru',
       previewHead: 'Náhled PDF',
       loadingFonts: 'Načítám písma…',
       fontsLoaded: 'Písma načtena.',
@@ -74,6 +74,7 @@
   };
 
   var LANG_COOKIE = 'cvgen_lang';
+  var STORAGE_KEY = 'cvgen_state';
 
   function getCookie(name) {
     var m = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
@@ -104,12 +105,13 @@
   var btnOpen = document.getElementById('btn-open');
   var btnSaveMd = document.getElementById('btn-save-md');
   var btnPdf = document.getElementById('btn-pdf');
-  var editorHead = document.getElementById('editor-head');
+  var nameInput = document.getElementById('name-input');
   var previewHead = document.getElementById('preview-head');
   var dropText = document.getElementById('drop-text');
   var langSelect = document.getElementById('lang');
 
-  var uploadedBase = null;   // name of the user's uploaded file, wins over the title
+  var uploadedBase = null;   // name of the user's uploaded file
+  var manualBase = null;     // name typed into the header field, wins over everything
   var baseName = 'resume';   // effective download name, recomputed on render
   var fontsReady = false;
   var timer = null;
@@ -120,6 +122,84 @@
     status.textContent = text;
     status.className = isError ? 'status error' : 'status';
   }
+
+  // --- persistence ------------------------------------------------------
+
+  function persist() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        md: editor.value,
+        manualBase: manualBase,
+        uploadedBase: uploadedBase
+      }));
+    } catch (e) { /* storage unavailable — run without persistence */ }
+  }
+
+  function loadState() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // --- undo / redo ------------------------------------------------------
+
+  var HISTORY_LIMIT = 200;
+  var histStack = [];
+  var histIndex = -1;
+  var histTimer = null;
+
+  function snapshot() {
+    return { value: editor.value, start: editor.selectionStart, end: editor.selectionEnd };
+  }
+
+  function resetHistory() {
+    clearTimeout(histTimer);
+    histTimer = null;
+    histStack = [snapshot()];
+    histIndex = 0;
+  }
+
+  function commitHistory() {
+    clearTimeout(histTimer);
+    histTimer = null;
+    if (histStack[histIndex] && histStack[histIndex].value === editor.value) return;
+    histStack = histStack.slice(0, histIndex + 1);
+    histStack.push(snapshot());
+    if (histStack.length > HISTORY_LIMIT) histStack.shift();
+    histIndex = histStack.length - 1;
+  }
+
+  function scheduleHistory() {
+    clearTimeout(histTimer);
+    histTimer = setTimeout(commitHistory, 300);
+  }
+
+  function applyHistory(entry) {
+    editor.value = entry.value;
+    editor.focus();
+    editor.setSelectionRange(entry.start, entry.end);
+    render();
+  }
+
+  function undo() {
+    commitHistory();
+    if (histIndex > 0) {
+      histIndex--;
+      applyHistory(histStack[histIndex]);
+    }
+  }
+
+  function redo() {
+    commitHistory();
+    if (histIndex < histStack.length - 1) {
+      histIndex++;
+      applyHistory(histStack[histIndex]);
+    }
+  }
+
+  // --- fonts ------------------------------------------------------------
 
   function toBase64(buffer) {
     var bytes = new Uint8Array(buffer);
@@ -148,6 +228,8 @@
     });
   }
 
+  // --- naming and rendering ---------------------------------------------
+
   function docDefinition(md) {
     return CvFormat.markdownToDocDefinition(md, { metaTitleFallback: t().metaTitleFallback });
   }
@@ -162,25 +244,38 @@
     return s || null;
   }
 
-  function currentBase() {
+  function autoBase() {
     return uploadedBase || slugify(CvFormat.parseMarkdown(editor.value).title) || 'resume';
+  }
+
+  function currentBase() {
+    var manual = (manualBase || '').trim();
+    return manual ? manual.replace(/[\/\\]/g, '-') : autoBase();
   }
 
   function updateButtons() {
     baseName = currentBase();
+    var auto = autoBase();
+    nameInput.placeholder = auto;
+    if (nameInput.value !== (manualBase || '')) nameInput.value = manualBase || '';
+    var shown = (manualBase || '').trim() || auto;
+    nameInput.style.width = Math.min(Math.max(shown.length, 6), 40) + 'ch';
     btnSaveMd.textContent = t().saveMd.replace('{name}', baseName + '.md');
     btnPdf.textContent = t().downloadPdf.replace('{name}', baseName + '.pdf');
   }
 
   function render() {
-    if (!fontsReady) return;
-    var md = editor.value;
+    persist();
     updateButtons();
+    if (!fontsReady) return;
     try {
-      pdfMake.createPdf(docDefinition(md)).getBlob(function (blob) {
+      pdfMake.createPdf(docDefinition(editor.value)).getBlob(function (blob) {
         if (lastUrl) URL.revokeObjectURL(lastUrl);
         lastUrl = URL.createObjectURL(blob);
-        preview.src = lastUrl + '#toolbar=0&view=FitH';
+        var dest = lastUrl + '#toolbar=0&view=FitH';
+        // location.replace keeps preview reloads out of the browser history
+        try { preview.contentWindow.location.replace(dest); }
+        catch (e) { preview.src = dest; }
         setStatus(t().previewUpToDate
           .replace('{name}', baseName + '.pdf')
           .replace('{size}', Math.round(blob.size / 1024)));
@@ -202,7 +297,7 @@
     taglineEl.textContent = t().tagline;
     btnOpen.textContent = t().btnOpen;
     editor.setAttribute('aria-label', t().editorAria);
-    editorHead.textContent = t().editorHead;
+    nameInput.setAttribute('aria-label', t().nameAria);
     previewHead.textContent = t().previewHead;
     preview.setAttribute('title', t().previewHead);
     dropText.textContent = t().dropHere;
@@ -214,9 +309,13 @@
 
   function loadText(text, uploadedName) {
     editor.value = text;
+    editor.setSelectionRange(0, 0);
+    editor.scrollTop = 0;
     uploadedBase = uploadedName
       ? (uploadedName.replace(/\.(md|markdown|txt)$/i, '') || null)
       : null;
+    manualBase = null;
+    resetHistory();
     render();
   }
 
@@ -240,7 +339,33 @@
 
   // --- events -----------------------------------------------------------
 
-  editor.addEventListener('input', scheduleRender);
+  editor.addEventListener('input', function () {
+    scheduleHistory();
+    scheduleRender();
+  });
+
+  window.addEventListener('keydown', function (e) {
+    if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+    if (document.activeElement === nameInput) return;  // native undo in the name field
+    var key = e.key.toLowerCase();
+    if (key === 'z') {
+      e.preventDefault();
+      if (e.shiftKey) redo(); else undo();
+    } else if (key === 'y' && !e.shiftKey) {
+      e.preventDefault();
+      redo();
+    }
+  });
+
+  nameInput.addEventListener('input', function () {
+    manualBase = nameInput.value === '' ? null : nameInput.value;
+    persist();
+    updateButtons();
+  });
+
+  nameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') nameInput.blur();
+  });
 
   langSelect.addEventListener('change', function () {
     lang = langSelect.value;
@@ -292,16 +417,27 @@
 
   // --- start ------------------------------------------------------------
 
+  var saved = loadState();
+  if (saved && saved.md) {
+    editor.value = saved.md;
+    uploadedBase = saved.uploadedBase || null;
+    manualBase = saved.manualBase || null;
+  }
   applyLanguage();
+  resetHistory();
 
   loadFonts()
     .then(function () {
       setStatus(t().fontsLoaded);
+      if (editor.value !== '') return '';
       return fetch('sample/resume.md').then(function (r) { return r.ok ? r.text() : ''; });
     })
     .then(function (text) {
       if (text) loadText(text);
       else render();
+      editor.focus();
+      editor.setSelectionRange(0, 0);
+      editor.scrollTop = 0;
     })
     .catch(function (err) {
       setStatus(err.message + t().serveHint, true);
