@@ -1,5 +1,12 @@
 # cvgen — Markdown → PDF CV generator
 
+[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare%20Pages-cvcko.pages.dev-f38020?logo=cloudflare&logoColor=white)](https://cvcko.pages.dev)
+[![Production status](https://img.shields.io/website?url=https%3A%2F%2Fcvcko.pages.dev&label=production&up_message=online&down_message=offline)](https://cvcko.pages.dev)
+
+**Live: <https://cvcko.pages.dev>** — every pull request gets its own preview
+deployment (linked by the Cloudflare bot in the PR), and merging to `main`
+redeploys production automatically.
+
 A static web app: drop an `.md` file into the window, the right pane shows a PDF
 typeset in a classic CV layout, and a button downloads it. Typesetting runs
 entirely in the browser (pdfmake), nothing is uploaded anywhere, and deployment
@@ -40,15 +47,16 @@ cd site && python3 -m http.server 8080     # or: npx serve site
 
 ## Deploying to Cloudflare Pages
 
-No build step — these are static files.
+Production runs as the Cloudflare Pages project `cvcko`, connected to this
+repository — pushes to `main` deploy production and every pull request gets a
+preview deployment. There is no build step: the build command is empty and the
+output directory is `site`.
+
+A one-off manual deploy is also possible:
 
 ```bash
-npx wrangler pages deploy site --project-name cvgen
+npx wrangler pages deploy site --project-name cvcko
 ```
-
-Or via the dashboard: Workers & Pages → Create → Pages → Upload assets and
-upload the contents of the `site` folder. When connecting a Git repository,
-leave the build command empty and set the output directory to `site`.
 
 ## Generating from the command line
 

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node build-pdf.js",
     "serve": "npx --yes serve site",
-    "deploy": "npx --yes wrangler pages deploy site --project-name cvgen"
+    "deploy": "npx --yes wrangler pages deploy site --project-name cvcko"
   },
   "dependencies": {
     "pdfmake": "^0.2.20"
