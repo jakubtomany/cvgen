@@ -112,8 +112,11 @@
   var previewHead = document.getElementById('preview-head');
   var dropText = document.getElementById('drop-text');
   var langSelect = document.getElementById('lang');
+  var nameMd = document.getElementById('name-md');
+  var namePdf = document.getElementById('name-pdf');
 
-  var baseName = 'resume';
+  var uploadedBase = null;   // name of the user's uploaded file, wins over the title
+  var baseName = 'resume';   // effective download name, recomputed on render
   var fontsReady = false;
   var timer = null;
   var lastUrl = null;
@@ -155,10 +158,32 @@
     return CvFormat.markdownToDocDefinition(md, { metaTitleFallback: t().metaTitleFallback });
   }
 
+  function slugify(text) {
+    var s = String(text || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return s || null;
+  }
+
+  function currentBase() {
+    return uploadedBase || slugify(CvFormat.parseMarkdown(editor.value).title) || 'resume';
+  }
+
+  function updateNameHints() {
+    nameMd.textContent = baseName + '.md';
+    namePdf.textContent = baseName + '.pdf';
+    filenameEl.textContent = baseName + '.md';
+  }
+
   function render() {
     if (!fontsReady) return;
     var md = editor.value;
     counter.textContent = md.split('\n').length + t().lines;
+    baseName = currentBase();
+    updateNameHints();
     try {
       pdfMake.createPdf(docDefinition(md)).getBlob(function (blob) {
         if (lastUrl) URL.revokeObjectURL(lastUrl);
@@ -196,12 +221,11 @@
     else setStatus(t().loadingFonts);
   }
 
-  function loadText(text, name) {
+  function loadText(text, uploadedName) {
     editor.value = text;
-    if (name) {
-      baseName = name.replace(/\.(md|markdown|txt)$/i, '') || 'resume';
-      filenameEl.textContent = name;
-    }
+    uploadedBase = uploadedName
+      ? (uploadedName.replace(/\.(md|markdown|txt)$/i, '') || null)
+      : null;
     render();
   }
 
@@ -243,18 +267,18 @@
   btnSample.addEventListener('click', function () {
     fetch('sample/resume.md')
       .then(function (r) { return r.text(); })
-      .then(function (text) { loadText(text, 'resume.md'); })
+      .then(function (text) { loadText(text); })
       .catch(function () { setStatus(t().sampleError, true); });
   });
 
   btnSaveMd.addEventListener('click', function () {
-    download(new Blob([editor.value], { type: 'text/markdown;charset=utf-8' }), baseName + '.md');
+    download(new Blob([editor.value], { type: 'text/markdown;charset=utf-8' }), currentBase() + '.md');
   });
 
   btnPdf.addEventListener('click', function () {
     if (!fontsReady) return;
     try {
-      pdfMake.createPdf(docDefinition(editor.value)).download(baseName + '.pdf');
+      pdfMake.createPdf(docDefinition(editor.value)).download(currentBase() + '.pdf');
     } catch (err) {
       setStatus(t().typesetError + err.message, true);
     }
@@ -292,7 +316,7 @@
       return fetch('sample/resume.md').then(function (r) { return r.ok ? r.text() : ''; });
     })
     .then(function (text) {
-      if (text) loadText(text, 'resume.md');
+      if (text) loadText(text);
       else render();
     })
     .catch(function (err) {

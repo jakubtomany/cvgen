@@ -101,6 +101,10 @@ Polytechnic University of Springfield
 
 ## Notes
 
+- Downloaded files are named after the file you opened or dropped in; when
+  nothing was uploaded, the name is derived from the document's `# title` with
+  diacritics stripped (`# Životopis` → `zivotopis.pdf`), falling back to
+  `resume`. The effective name is shown beneath the download buttons.
 - The UI is available in English and Czech — the selector in the header stores
   the choice in a `cvgen_lang` cookie. The typeset PDF contains only text from
   the Markdown input; the only language-specific piece is the PDF metadata

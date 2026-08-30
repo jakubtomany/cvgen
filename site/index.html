@@ -32,7 +32,7 @@
 
   header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 16px;
     padding: 14px 20px;
     border-bottom: 1px solid var(--line);
@@ -94,6 +94,20 @@
   select:hover { border-color: var(--accent); color: var(--accent); }
 
   select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .btn-col {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .btn-col small {
+    font-size: 10px;
+    line-height: 1;
+    min-height: 10px;
+    color: var(--ink-soft);
+  }
 
   main {
     flex: 1;
@@ -189,8 +203,14 @@
   <span class="spacer"></span>
   <button id="btn-open">Open .md</button>
   <button id="btn-sample">Load sample</button>
-  <button id="btn-save-md">Save .md</button>
-  <button id="btn-pdf" class="primary">Download PDF</button>
+  <span class="btn-col">
+    <button id="btn-save-md">Save .md</button>
+    <small id="name-md"></small>
+  </span>
+  <span class="btn-col">
+    <button id="btn-pdf" class="primary">Download PDF</button>
+    <small id="name-pdf"></small>
+  </span>
   <select id="lang" aria-label="Language">
     <option value="en">EN</option>
     <option value="cs">CZ</option>
