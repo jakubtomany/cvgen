@@ -26,6 +26,76 @@
     }
   };
 
+  // --- i18n -------------------------------------------------------------
+
+  var I18N = {
+    en: {
+      docTitle: 'CV Generator — Markdown to PDF',
+      heading: 'CV Generator',
+      tagline: 'Markdown on the left, finished PDF on the right. Drop an .md file anywhere in the window.',
+      btnOpen: 'Open .md',
+      btnSample: 'Load sample',
+      btnSaveMd: 'Save .md',
+      btnPdf: 'Download PDF',
+      editorAria: 'Markdown source',
+      previewHead: 'PDF preview',
+      loadingFonts: 'Loading fonts…',
+      fontsLoaded: 'Fonts loaded.',
+      fontError: 'Failed to load font ',
+      previewUpToDate: 'Preview up to date — {name}, {size} kB.',
+      typesetError: 'Typesetting error: ',
+      fileReadError: 'Could not read the file.',
+      sampleError: 'Failed to load the sample.',
+      serveHint: ' Serve the page over HTTP, not from file://.',
+      lines: ' lines',
+      dropHere: 'Drop your .md file here',
+      metaTitleFallback: 'Curriculum Vitae'
+    },
+    cs: {
+      docTitle: 'Generátor životopisu — Markdown do PDF',
+      heading: 'Generátor životopisu',
+      tagline: 'Markdown vlevo, hotové PDF vpravo. Soubor .md můžete přetáhnout kamkoli do okna.',
+      btnOpen: 'Otevřít .md',
+      btnSample: 'Načíst ukázku',
+      btnSaveMd: 'Uložit .md',
+      btnPdf: 'Stáhnout PDF',
+      editorAria: 'Zdrojový Markdown',
+      previewHead: 'Náhled PDF',
+      loadingFonts: 'Načítám písma…',
+      fontsLoaded: 'Písma načtena.',
+      fontError: 'Nepodařilo se načíst písmo ',
+      previewUpToDate: 'Náhled aktuální — {name}, {size} kB.',
+      typesetError: 'Chyba při sazbě: ',
+      fileReadError: 'Soubor se nepodařilo přečíst.',
+      sampleError: 'Ukázku se nepodařilo načíst.',
+      serveHint: ' Spusťte stránku přes webový server, ne přes file://.',
+      lines: ' řádků',
+      dropHere: 'Pusťte soubor .md sem',
+      metaTitleFallback: 'Životopis'
+    }
+  };
+
+  var LANG_COOKIE = 'cvgen_lang';
+
+  function getCookie(name) {
+    var m = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function setCookie(name, value) {
+    document.cookie = name + '=' + encodeURIComponent(value) +
+      '; path=/; max-age=31536000; SameSite=Lax';
+  }
+
+  var lang = getCookie(LANG_COOKIE);
+  if (lang !== 'en' && lang !== 'cs') {
+    lang = (navigator.language || '').toLowerCase().indexOf('cs') === 0 ? 'cs' : 'en';
+  }
+
+  function t() { return I18N[lang]; }
+
+  // --- elements ---------------------------------------------------------
+
   var editor = document.getElementById('editor');
   var preview = document.getElementById('preview');
   var status = document.getElementById('status');
@@ -33,6 +103,15 @@
   var filenameEl = document.getElementById('filename');
   var drop = document.getElementById('drop');
   var fileInput = document.getElementById('file');
+  var headingEl = document.getElementById('heading');
+  var taglineEl = document.getElementById('tagline');
+  var btnOpen = document.getElementById('btn-open');
+  var btnSample = document.getElementById('btn-sample');
+  var btnSaveMd = document.getElementById('btn-save-md');
+  var btnPdf = document.getElementById('btn-pdf');
+  var previewHead = document.getElementById('preview-head');
+  var dropText = document.getElementById('drop-text');
+  var langSelect = document.getElementById('lang');
 
   var baseName = 'resume';
   var fontsReady = false;
@@ -58,7 +137,7 @@
   function loadFonts() {
     return Promise.all(FONT_FILES.map(function (name) {
       return fetch('fonts/' + name).then(function (res) {
-        if (!res.ok) throw new Error('Failed to load font ' + name + ' (' + res.status + ').');
+        if (!res.ok) throw new Error(t().fontError + name + ' (' + res.status + ').');
         return res.arrayBuffer();
       }).then(function (buf) {
         return [name, toBase64(buf)];
@@ -72,26 +151,49 @@
     });
   }
 
+  function docDefinition(md) {
+    return CvFormat.markdownToDocDefinition(md, { metaTitleFallback: t().metaTitleFallback });
+  }
+
   function render() {
     if (!fontsReady) return;
     var md = editor.value;
-    counter.textContent = md.split('\n').length + ' lines';
+    counter.textContent = md.split('\n').length + t().lines;
     try {
-      var docDefinition = CvFormat.markdownToDocDefinition(md);
-      pdfMake.createPdf(docDefinition).getBlob(function (blob) {
+      pdfMake.createPdf(docDefinition(md)).getBlob(function (blob) {
         if (lastUrl) URL.revokeObjectURL(lastUrl);
         lastUrl = URL.createObjectURL(blob);
         preview.src = lastUrl + '#toolbar=0&view=FitH';
-        setStatus('Preview up to date — ' + baseName + '.pdf, ' + Math.round(blob.size / 1024) + ' kB.');
+        setStatus(t().previewUpToDate
+          .replace('{name}', baseName + '.pdf')
+          .replace('{size}', Math.round(blob.size / 1024)));
       });
     } catch (err) {
-      setStatus('Typesetting error: ' + err.message, true);
+      setStatus(t().typesetError + err.message, true);
     }
   }
 
   function scheduleRender() {
     clearTimeout(timer);
     timer = setTimeout(render, 350);
+  }
+
+  function applyLanguage() {
+    document.documentElement.setAttribute('lang', lang);
+    document.title = t().docTitle;
+    headingEl.textContent = t().heading;
+    taglineEl.textContent = t().tagline;
+    btnOpen.textContent = t().btnOpen;
+    btnSample.textContent = t().btnSample;
+    btnSaveMd.textContent = t().btnSaveMd;
+    btnPdf.textContent = t().btnPdf;
+    editor.setAttribute('aria-label', t().editorAria);
+    previewHead.textContent = t().previewHead;
+    preview.setAttribute('title', t().previewHead);
+    dropText.textContent = t().dropHere;
+    langSelect.value = lang;
+    if (fontsReady) render();
+    else setStatus(t().loadingFonts);
   }
 
   function loadText(text, name) {
@@ -106,7 +208,7 @@
   function readFile(file) {
     var reader = new FileReader();
     reader.onload = function () { loadText(String(reader.result), file.name); };
-    reader.onerror = function () { setStatus('Could not read the file.', true); };
+    reader.onerror = function () { setStatus(t().fileReadError, true); };
     reader.readAsText(file, 'utf-8');
   }
 
@@ -125,30 +227,36 @@
 
   editor.addEventListener('input', scheduleRender);
 
-  document.getElementById('btn-open').addEventListener('click', function () { fileInput.click(); });
+  langSelect.addEventListener('change', function () {
+    lang = langSelect.value;
+    setCookie(LANG_COOKIE, lang);
+    applyLanguage();
+  });
+
+  btnOpen.addEventListener('click', function () { fileInput.click(); });
 
   fileInput.addEventListener('change', function () {
     if (fileInput.files[0]) readFile(fileInput.files[0]);
     fileInput.value = '';
   });
 
-  document.getElementById('btn-sample').addEventListener('click', function () {
+  btnSample.addEventListener('click', function () {
     fetch('sample/resume.md')
       .then(function (r) { return r.text(); })
-      .then(function (t) { loadText(t, 'resume.md'); })
-      .catch(function () { setStatus('Failed to load the sample.', true); });
+      .then(function (text) { loadText(text, 'resume.md'); })
+      .catch(function () { setStatus(t().sampleError, true); });
   });
 
-  document.getElementById('btn-save-md').addEventListener('click', function () {
+  btnSaveMd.addEventListener('click', function () {
     download(new Blob([editor.value], { type: 'text/markdown;charset=utf-8' }), baseName + '.md');
   });
 
-  document.getElementById('btn-pdf').addEventListener('click', function () {
+  btnPdf.addEventListener('click', function () {
     if (!fontsReady) return;
     try {
-      pdfMake.createPdf(CvFormat.markdownToDocDefinition(editor.value)).download(baseName + '.pdf');
+      pdfMake.createPdf(docDefinition(editor.value)).download(baseName + '.pdf');
     } catch (err) {
-      setStatus('Typesetting error: ' + err.message, true);
+      setStatus(t().typesetError + err.message, true);
     }
   });
 
@@ -176,9 +284,11 @@
 
   // --- start ------------------------------------------------------------
 
+  applyLanguage();
+
   loadFonts()
     .then(function () {
-      setStatus('Fonts loaded.');
+      setStatus(t().fontsLoaded);
       return fetch('sample/resume.md').then(function (r) { return r.ok ? r.text() : ''; });
     })
     .then(function (text) {
@@ -186,6 +296,6 @@
       else render();
     })
     .catch(function (err) {
-      setStatus(err.message + ' Serve the page over HTTP, not from file://.', true);
+      setStatus(err.message + t().serveHint, true);
     });
 })();

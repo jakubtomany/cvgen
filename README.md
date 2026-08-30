@@ -93,6 +93,10 @@ Polytechnic University of Springfield
 
 ## Notes
 
+- The UI is available in English and Czech — the selector in the header stores
+  the choice in a `cvgen_lang` cookie. The typeset PDF contains only text from
+  the Markdown input; the only language-specific piece is the PDF metadata
+  title used as a fallback when the document has no `# title`.
 - A group of up to 8 table rows never breaks across pages (`unbreakableMaxRows`
   in `cv-format.js`); longer tables are allowed to break so that half-empty
   pages don't pile up.

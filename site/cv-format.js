@@ -26,7 +26,8 @@
     ruleColor: '#000000',
     cellPaddingV: 3.5,
     cellGap: 9,
-    unbreakableMaxRows: 8            // longer tables are allowed to break across pages
+    unbreakableMaxRows: 8,           // longer tables are allowed to break across pages
+    metaTitleFallback: 'Curriculum Vitae'  // PDF metadata title when the input has no # title
   };
 
   // ---------------------------------------------------------------- parser --
@@ -237,7 +238,7 @@
     return {
       pageSize: o.pageSize,
       pageMargins: o.pageMargins,
-      info: { title: doc.title || 'Curriculum Vitae' },
+      info: { title: doc.title || o.metaTitleFallback },
       content: content,
       defaultStyle: {
         font: 'Serif',

@@ -80,6 +80,21 @@
 
   button[disabled] { opacity: 0.5; cursor: not-allowed; }
 
+  select {
+    font: inherit;
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  select:hover { border-color: var(--accent); color: var(--accent); }
+
+  select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
   main {
     flex: 1;
     display: grid;
@@ -169,13 +184,17 @@
 <body>
 
 <header>
-  <h1>CV Generator</h1>
-  <p>Markdown on the left, finished PDF on the right. Drop an .md file anywhere in the window.</p>
+  <h1 id="heading">CV Generator</h1>
+  <p id="tagline">Markdown on the left, finished PDF on the right. Drop an .md file anywhere in the window.</p>
   <span class="spacer"></span>
   <button id="btn-open">Open .md</button>
   <button id="btn-sample">Load sample</button>
   <button id="btn-save-md">Save .md</button>
   <button id="btn-pdf" class="primary">Download PDF</button>
+  <select id="lang" aria-label="Language">
+    <option value="en">EN</option>
+    <option value="cs">CZ</option>
+  </select>
   <input id="file" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
 </header>
 
@@ -185,14 +204,14 @@
     <textarea id="editor" spellcheck="false" aria-label="Markdown source"></textarea>
   </section>
   <section class="pane">
-    <div class="pane-head">PDF preview</div>
+    <div class="pane-head" id="preview-head">PDF preview</div>
     <iframe id="preview" title="PDF preview"></iframe>
   </section>
 </main>
 
 <div class="status" id="status">Loading fonts…</div>
 
-<div id="drop"><div>Drop your .md file here</div></div>
+<div id="drop"><div id="drop-text">Drop your .md file here</div></div>
 
 <script src="vendor/pdfmake.min.js"></script>
 <script src="cv-format.js"></script>
