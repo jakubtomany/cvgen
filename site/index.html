@@ -95,18 +95,11 @@
 
   select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  .btn-col {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-  }
-
-  .btn-col small {
-    font-size: 10px;
-    line-height: 1;
-    min-height: 10px;
-    color: var(--ink-soft);
+  .pane-head button {
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 12px;
+    padding: 4px 12px;
   }
 
   main {
@@ -202,15 +195,6 @@
   <p id="tagline">Markdown on the left, finished PDF on the right. Drop an .md file anywhere in the window.</p>
   <span class="spacer"></span>
   <button id="btn-open">Open .md</button>
-  <button id="btn-sample">Load sample</button>
-  <span class="btn-col">
-    <button id="btn-save-md">Save .md</button>
-    <small id="name-md"></small>
-  </span>
-  <span class="btn-col">
-    <button id="btn-pdf" class="primary">Download PDF</button>
-    <small id="name-pdf"></small>
-  </span>
   <select id="lang" aria-label="Language">
     <option value="en">EN</option>
     <option value="cs">CZ</option>
@@ -220,11 +204,11 @@
 
 <main>
   <section class="pane">
-    <div class="pane-head"><span id="filename">resume.md</span><span class="spacer"></span><span id="counter"></span></div>
+    <div class="pane-head"><span id="editor-head">Markdown</span><span class="spacer"></span><button id="btn-save-md">Save resume.md</button></div>
     <textarea id="editor" spellcheck="false" aria-label="Markdown source"></textarea>
   </section>
   <section class="pane">
-    <div class="pane-head" id="preview-head">PDF preview</div>
+    <div class="pane-head"><span id="preview-head">PDF preview</span><span class="spacer"></span><button id="btn-pdf" class="primary">Download resume.pdf</button></div>
     <iframe id="preview" title="PDF preview"></iframe>
   </section>
 </main>

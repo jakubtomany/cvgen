@@ -34,10 +34,10 @@
       heading: 'CV Generator',
       tagline: 'Markdown on the left, finished PDF on the right. Drop an .md file anywhere in the window.',
       btnOpen: 'Open .md',
-      btnSample: 'Load sample',
-      btnSaveMd: 'Save .md',
-      btnPdf: 'Download PDF',
+      saveMd: 'Save {name}',
+      downloadPdf: 'Download {name}',
       editorAria: 'Markdown source',
+      editorHead: 'Markdown',
       previewHead: 'PDF preview',
       loadingFonts: 'Loading fonts…',
       fontsLoaded: 'Fonts loaded.',
@@ -47,7 +47,6 @@
       fileReadError: 'Could not read the file.',
       sampleError: 'Failed to load the sample.',
       serveHint: ' Serve the page over HTTP, not from file://.',
-      lines: ' lines',
       dropHere: 'Drop your .md file here',
       metaTitleFallback: 'Curriculum Vitae'
     },
@@ -56,10 +55,10 @@
       heading: 'Generátor životopisu',
       tagline: 'Markdown vlevo, hotové PDF vpravo. Soubor .md můžete přetáhnout kamkoli do okna.',
       btnOpen: 'Otevřít .md',
-      btnSample: 'Načíst ukázku',
-      btnSaveMd: 'Uložit .md',
-      btnPdf: 'Stáhnout PDF',
+      saveMd: 'Uložit {name}',
+      downloadPdf: 'Stáhnout {name}',
       editorAria: 'Zdrojový Markdown',
+      editorHead: 'Markdown',
       previewHead: 'Náhled PDF',
       loadingFonts: 'Načítám písma…',
       fontsLoaded: 'Písma načtena.',
@@ -69,7 +68,6 @@
       fileReadError: 'Soubor se nepodařilo přečíst.',
       sampleError: 'Ukázku se nepodařilo načíst.',
       serveHint: ' Spusťte stránku přes webový server, ne přes file://.',
-      lines: ' řádků',
       dropHere: 'Pusťte soubor .md sem',
       metaTitleFallback: 'Životopis'
     }
@@ -99,21 +97,17 @@
   var editor = document.getElementById('editor');
   var preview = document.getElementById('preview');
   var status = document.getElementById('status');
-  var counter = document.getElementById('counter');
-  var filenameEl = document.getElementById('filename');
   var drop = document.getElementById('drop');
   var fileInput = document.getElementById('file');
   var headingEl = document.getElementById('heading');
   var taglineEl = document.getElementById('tagline');
   var btnOpen = document.getElementById('btn-open');
-  var btnSample = document.getElementById('btn-sample');
   var btnSaveMd = document.getElementById('btn-save-md');
   var btnPdf = document.getElementById('btn-pdf');
+  var editorHead = document.getElementById('editor-head');
   var previewHead = document.getElementById('preview-head');
   var dropText = document.getElementById('drop-text');
   var langSelect = document.getElementById('lang');
-  var nameMd = document.getElementById('name-md');
-  var namePdf = document.getElementById('name-pdf');
 
   var uploadedBase = null;   // name of the user's uploaded file, wins over the title
   var baseName = 'resume';   // effective download name, recomputed on render
@@ -172,18 +166,16 @@
     return uploadedBase || slugify(CvFormat.parseMarkdown(editor.value).title) || 'resume';
   }
 
-  function updateNameHints() {
-    nameMd.textContent = baseName + '.md';
-    namePdf.textContent = baseName + '.pdf';
-    filenameEl.textContent = baseName + '.md';
+  function updateButtons() {
+    baseName = currentBase();
+    btnSaveMd.textContent = t().saveMd.replace('{name}', baseName + '.md');
+    btnPdf.textContent = t().downloadPdf.replace('{name}', baseName + '.pdf');
   }
 
   function render() {
     if (!fontsReady) return;
     var md = editor.value;
-    counter.textContent = md.split('\n').length + t().lines;
-    baseName = currentBase();
-    updateNameHints();
+    updateButtons();
     try {
       pdfMake.createPdf(docDefinition(md)).getBlob(function (blob) {
         if (lastUrl) URL.revokeObjectURL(lastUrl);
@@ -209,14 +201,13 @@
     headingEl.textContent = t().heading;
     taglineEl.textContent = t().tagline;
     btnOpen.textContent = t().btnOpen;
-    btnSample.textContent = t().btnSample;
-    btnSaveMd.textContent = t().btnSaveMd;
-    btnPdf.textContent = t().btnPdf;
     editor.setAttribute('aria-label', t().editorAria);
+    editorHead.textContent = t().editorHead;
     previewHead.textContent = t().previewHead;
     preview.setAttribute('title', t().previewHead);
     dropText.textContent = t().dropHere;
     langSelect.value = lang;
+    updateButtons();
     if (fontsReady) render();
     else setStatus(t().loadingFonts);
   }
@@ -262,13 +253,6 @@
   fileInput.addEventListener('change', function () {
     if (fileInput.files[0]) readFile(fileInput.files[0]);
     fileInput.value = '';
-  });
-
-  btnSample.addEventListener('click', function () {
-    fetch('sample/resume.md')
-      .then(function (r) { return r.text(); })
-      .then(function (text) { loadText(text); })
-      .catch(function () { setStatus(t().sampleError, true); });
   });
 
   btnSaveMd.addEventListener('click', function () {
