@@ -36,6 +36,21 @@
       btnOpen: 'Open .md',
       btnReset: 'Discard',
       btnResetConfirm: 'Really discard?',
+      btnHelp: 'Help',
+      helpTitle: 'Format guide',
+      helpCloseAria: 'Close',
+      helpRows: [
+        ['# Text', 'document title (top, centred)'],
+        ['## Text', 'section heading (Education, Employment…)'],
+        ['**Label:** value', 'table row — label left of the vertical rule, value right'],
+        ['next line', 'continuation of the value in the same cell'],
+        ['- item', 'bullet inside the current value'],
+        ['---', 'item separator within a section (next job, next school)'],
+        ['### Text', 'bold full-width subheading'],
+        ['plain paragraph', 'full-width text (e.g. an Interests section)']
+      ],
+      helpInline: '**bold** and *italics* work inside values.',
+      helpExample: '## Education\n\n**Period:** 2015 – 2019\n**Qualification:** High school diploma\n**Main subjects:**\n- Mathematics\n- Physics\n\n---\n\n**Period:** 2019 – 2023\n**School:** Technical University',
       saveMd: 'Save {name}',
       downloadPdf: 'Download {name}',
       editorAria: 'Markdown source',
@@ -59,6 +74,21 @@
       btnOpen: 'Otevřít .md',
       btnReset: 'Zahodit',
       btnResetConfirm: 'Opravdu zahodit?',
+      btnHelp: 'Nápověda',
+      helpTitle: 'Nápověda k formátu',
+      helpCloseAria: 'Zavřít',
+      helpRows: [
+        ['# Text', 'název dokumentu (nahoře, na střed)'],
+        ['## Text', 'nadpis sekce (Vzdělání, Zaměstnání…)'],
+        ['**Štítek:** hodnota', 'řádek tabulky — štítek vlevo od svislé linky, hodnota vpravo'],
+        ['další řádek', 'pokračování hodnoty ve stejné buňce'],
+        ['- položka', 'odrážka uvnitř právě otevřené hodnoty'],
+        ['---', 'oddělovač položek v sekci (další zaměstnání, další škola)'],
+        ['### Text', 'tučný mezinadpis přes celou šířku'],
+        ['volný odstavec', 'text přes celou šířku (např. sekce Zájmy)']
+      ],
+      helpInline: 'Uvnitř hodnot funguje **tučně** a *kurzíva*.',
+      helpExample: '## Vzdělání\n\n**Období:** 2015 – 2019\n**Dosažená kvalifikace:** Maturita\n**Hlavní předměty:**\n- Matematika\n- Fyzika\n\n---\n\n**Období:** 2019 – 2023\n**Škola:** ČVUT v Praze',
       saveMd: 'Uložit {name}',
       downloadPdf: 'Stáhnout {name}',
       editorAria: 'Zdrojový Markdown',
@@ -108,6 +138,13 @@
   var taglineEl = document.getElementById('tagline');
   var btnOpen = document.getElementById('btn-open');
   var btnReset = document.getElementById('btn-reset');
+  var btnHelp = document.getElementById('btn-help');
+  var helpEl = document.getElementById('help');
+  var helpTitle = document.getElementById('help-title');
+  var helpTable = document.getElementById('help-table');
+  var helpInline = document.getElementById('help-inline');
+  var helpExample = document.getElementById('help-example');
+  var btnHelpClose = document.getElementById('btn-help-close');
   var btnSaveMd = document.getElementById('btn-save-md');
   var btnPdf = document.getElementById('btn-pdf');
   var nameInput = document.getElementById('name-input');
@@ -360,6 +397,14 @@
     taglineEl.textContent = t().tagline;
     btnOpen.textContent = t().btnOpen;
     btnReset.textContent = resetArmedAt ? t().btnResetConfirm : t().btnReset;
+    btnHelp.textContent = t().btnHelp;
+    helpTitle.textContent = t().helpTitle;
+    btnHelpClose.setAttribute('aria-label', t().helpCloseAria);
+    helpTable.innerHTML = t().helpRows.map(function (r) {
+      return '<tr><td><code>' + r[0] + '</code></td><td>' + r[1] + '</td></tr>';
+    }).join('');
+    helpInline.textContent = t().helpInline;
+    helpExample.textContent = t().helpExample;
     editor.setAttribute('aria-label', t().editorAria);
     nameInput.setAttribute('aria-label', t().nameAria);
     previewHead.textContent = t().previewHead;
@@ -478,6 +523,13 @@
     commitHistory();
     persist();
   });
+
+  function hideHelp() { helpEl.classList.remove('visible'); }
+
+  btnHelp.addEventListener('click', function () { helpEl.classList.add('visible'); });
+  btnHelpClose.addEventListener('click', hideHelp);
+  helpEl.addEventListener('click', function (e) { if (e.target === helpEl) hideHelp(); });
+  window.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideHelp(); });
 
   fileInput.addEventListener('change', function () {
     if (fileInput.files[0]) readFile(fileInput.files[0]);
