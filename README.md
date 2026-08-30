@@ -101,10 +101,16 @@ Polytechnic University of Springfield
 
 ## Notes
 
-- Downloaded files are named after the file you opened or dropped in; when
-  nothing was uploaded, the name is derived from the document's `# title` with
-  diacritics stripped (`# Životopis` → `zivotopis.pdf`), falling back to
+- Downloaded files are named by the editable field in the editor header; a
+  manually entered name wins, and clearing the field returns to automatic
+  naming: the name of the file you opened or dropped in, else the document's
+  `# title` with diacritics stripped (`# Životopis` → `zivotopis.pdf`), else
   `resume`. The effective name is shown directly in the download buttons.
+- The draft is saved to the browser's `localStorage` as you type, so reloading
+  the page restores it; the bundled sample only loads when there is no saved
+  draft.
+- Undo and redo work with Cmd/Ctrl+Z and Cmd/Ctrl+Shift+Z (or Ctrl+Y) and
+  always apply to the editor, regardless of what currently has focus.
 - The UI is available in English and Czech — the selector in the header stores
   the choice in a `cvgen_lang` cookie. The typeset PDF contains only text from
   the Markdown input; the only language-specific piece is the PDF metadata
