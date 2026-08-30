@@ -34,13 +34,15 @@
 
   function parseMarkdown(src) {
     var lines = String(src).replace(/\r\n?/g, '\n').split('\n');
-    var doc = { title: null, sections: [] };
+    var doc = { title: null, titleLine: null, sections: [] };
     var section = null;
     var block = null;
     var row = null;
 
-    function newSection(name) {
-      section = { name: name, blocks: [] };
+    // Each parsed item remembers its source line (0-based) so the builder can
+    // tag the generated nodes and a caller can map an editor position to a page.
+    function newSection(name, line) {
+      section = { name: name, line: line, blocks: [] };
       doc.sections.push(section);
       block = null;
       row = null;
@@ -78,26 +80,27 @@
       // # Document title
       if ((m = line.match(/^#\s+(.*)$/))) {
         doc.title = m[1].trim();
+        doc.titleLine = i;
         continue;
       }
 
       // ## Section
       if ((m = line.match(/^##\s+(.*)$/))) {
-        newSection(m[1].trim());
+        newSection(m[1].trim(), i);
         continue;
       }
 
       // ### Subheading within a section (also starts a new block)
       if ((m = line.match(/^###\s+(.*)$/))) {
         newBlock();
-        block.items.push({ type: 'subheading', text: m[1].trim() });
+        block.items.push({ type: 'subheading', text: m[1].trim(), line: i });
         continue;
       }
 
       // **Label:** value
       if ((m = line.match(/^\*\*\s*(.+?)\s*:?\s*\*\*\s*:?\s*(.*)$/))) {
         ensureBlock();
-        row = { type: 'row', label: m[1].trim(), lines: [], bullets: [] };
+        row = { type: 'row', label: m[1].trim(), lines: [], bullets: [], line: i };
         if (m[2].trim() !== '') row.lines.push(m[2].trim());
         block.items.push(row);
         continue;
@@ -111,7 +114,7 @@
         } else {
           var last = block.items[block.items.length - 1];
           if (!last || last.type !== 'list') {
-            last = { type: 'list', items: [] };
+            last = { type: 'list', items: [], line: i };
             block.items.push(last);
           }
           last.items.push(m[1].trim());
@@ -124,7 +127,7 @@
       if (row) {
         row.lines.push(line);
       } else {
-        block.items.push({ type: 'para', text: line });
+        block.items.push({ type: 'para', text: line, line: i });
       }
     }
 
@@ -183,17 +186,24 @@
 
     var content = [];
 
+    // Nodes carry an id derived from their first source line ("src<line>") so
+    // that pageBreakBefore can report their page back through onNodePosition.
+    function srcId(line) {
+      return line != null ? 'src' + line : undefined;
+    }
+
     if (doc.title) {
-      content.push({ text: inline(doc.title), style: 'title' });
+      content.push({ text: inline(doc.title), style: 'title', id: srcId(doc.titleLine) });
     }
 
     doc.sections.forEach(function (section) {
       if (section.name) {
-        content.push({ text: inline(section.name), style: 'sectionHeading', headlineLevel: 'section' });
+        content.push({ text: inline(section.name), style: 'sectionHeading', headlineLevel: 'section', id: srcId(section.line) });
       }
 
       section.blocks.forEach(function (block, blockIndex) {
         var pending = [];
+        var pendingLine = null;
 
         function flush() {
           if (!pending.length) return;
@@ -201,28 +211,32 @@
             unbreakable: pending.length <= o.unbreakableMaxRows,
             margin: [0, 0, 0, 4],
             table: { widths: [o.labelWidth, '*'], body: pending },
-            layout: layout
+            layout: layout,
+            id: srcId(pendingLine)
           });
           pending = [];
+          pendingLine = null;
         }
 
         block.items.forEach(function (item) {
           if (item.type === 'row') {
+            if (!pending.length && item.line != null) pendingLine = item.line;
             pending.push([
               { text: inline(item.label), alignment: 'right' },
               valueCell(item)
             ]);
           } else if (item.type === 'subheading') {
             flush();
-            content.push({ text: inline(item.text), style: 'subheading' });
+            content.push({ text: inline(item.text), style: 'subheading', id: srcId(item.line) });
           } else if (item.type === 'para') {
             flush();
-            content.push({ text: inline(item.text), margin: [0, 0, 0, 4] });
+            content.push({ text: inline(item.text), margin: [0, 0, 0, 4], id: srcId(item.line) });
           } else if (item.type === 'list') {
             flush();
             content.push({
               ul: item.items.map(function (t) { return { text: inline(t) }; }),
-              margin: [10, 0, 0, 4]
+              margin: [10, 0, 0, 4],
+              id: srcId(item.line)
             });
           }
         });
@@ -265,6 +279,10 @@
         }
       },
       pageBreakBefore: function (currentNode, followingNodesOnPage) {
+        // report node pages to the caller (used by the web app to follow the cursor)
+        if (o.onNodePosition && currentNode.id && currentNode.startPosition) {
+          o.onNodePosition(currentNode.id, currentNode.startPosition.pageNumber);
+        }
         // move a section heading orphaned at the bottom of a page onto the next page
         return currentNode.headlineLevel === 'section' && followingNodesOnPage.length === 0;
       }

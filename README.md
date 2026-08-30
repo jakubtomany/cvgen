@@ -117,6 +117,9 @@ Polytechnic University of Springfield
 - The Discard button resets the editor back to the bundled sample. It asks for
   confirmation in place (a second click at least half a second later), and the
   discarded draft can still be brought back with undo.
+- After every re-render the preview opens on the page that contains the block
+  under the cursor, so it follows your editing instead of jumping back to the
+  first page.
 - The UI is available in English and Czech — the selector in the header stores
   the choice in a `cvgen_lang` cookie. The typeset PDF contains only text from
   the Markdown input; the only language-specific piece is the PDF metadata

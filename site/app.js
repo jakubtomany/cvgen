@@ -272,8 +272,28 @@
 
   // --- naming and rendering ---------------------------------------------
 
+  var nodePages = {};   // 'src<line>' -> page number, collected during layout
+
   function docDefinition(md) {
-    return CvFormat.markdownToDocDefinition(md, { metaTitleFallback: t().metaTitleFallback });
+    nodePages = {};
+    return CvFormat.markdownToDocDefinition(md, {
+      metaTitleFallback: t().metaTitleFallback,
+      onNodePosition: function (id, page) { nodePages[id] = page; }
+    });
+  }
+
+  function cursorPage() {
+    var line = editor.value.slice(0, editor.selectionStart).split('\n').length - 1;
+    var bestLine = -1;
+    var page = 1;
+    for (var key in nodePages) {
+      var l = parseInt(key.slice(3), 10);
+      if (l <= line && l > bestLine) {
+        bestLine = l;
+        page = nodePages[key];
+      }
+    }
+    return page;
   }
 
   function slugify(text) {
@@ -314,7 +334,8 @@
       pdfMake.createPdf(docDefinition(editor.value)).getBlob(function (blob) {
         if (lastUrl) URL.revokeObjectURL(lastUrl);
         lastUrl = URL.createObjectURL(blob);
-        var dest = lastUrl + '#toolbar=0&view=FitH';
+        // open the preview on the page that holds the block being edited
+        var dest = lastUrl + '#page=' + cursorPage() + '&toolbar=0&view=FitH';
         // location.replace keeps preview reloads out of the browser history
         try { preview.contentWindow.location.replace(dest); }
         catch (e) { preview.src = dest; }
