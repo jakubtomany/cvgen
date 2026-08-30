@@ -214,6 +214,68 @@
     letter-spacing: 0.02em;
   }
 
+  #help {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(23, 32, 31, 0.45);
+    z-index: 20;
+  }
+
+  #help.visible { display: flex; }
+
+  .help-panel {
+    background: var(--paper);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    max-width: 620px;
+    width: calc(100% - 40px);
+    max-height: 85vh;
+    overflow: auto;
+    padding: 18px 24px 22px;
+  }
+
+  .help-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .help-head span { font-weight: 650; font-size: 15px; }
+
+  .help-head button { padding: 2px 10px; font-size: 15px; line-height: 1.4; }
+
+  #help-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+
+  #help-table td {
+    border-top: 1px solid var(--line);
+    padding: 6px 10px 6px 0;
+    vertical-align: top;
+  }
+
+  #help-table td:first-child { white-space: nowrap; }
+
+  #help-table code {
+    font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: var(--accent-soft);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  #help-inline { font-size: 13px; color: var(--ink-soft); margin: 12px 0 8px; }
+
+  #help-example {
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: var(--bg);
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    margin: 0;
+  }
+
   @media (max-width: 860px) {
     main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
     .pane + .pane { border-left: 0; border-top: 1px solid var(--line); }
@@ -226,6 +288,7 @@
   <h1 id="heading">CV Generator</h1>
   <p id="tagline">Markdown on the left, finished PDF on the right. Drop an .md file anywhere in the window.</p>
   <span class="spacer"></span>
+  <button id="btn-help">Help</button>
   <button id="btn-reset">Discard</button>
   <button id="btn-open">Open .md</button>
   <select id="lang" aria-label="Language">
@@ -249,6 +312,18 @@
 <div class="status" id="status">Loading fonts…</div>
 
 <div id="drop"><div id="drop-text">Drop your .md file here</div></div>
+
+<div id="help">
+  <div class="help-panel">
+    <div class="help-head">
+      <span id="help-title">Format guide</span>
+      <button id="btn-help-close" aria-label="Close">×</button>
+    </div>
+    <table id="help-table"></table>
+    <p id="help-inline"></p>
+    <pre id="help-example"></pre>
+  </div>
+</div>
 
 <script src="vendor/pdfmake.min.js"></script>
 <script src="cv-format.js"></script>
